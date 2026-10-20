@@ -1,57 +1,104 @@
-{# extends: el listado también usa el molde base.html (debe ser la primera etiqueta) #}
+{# extends: el listado usa el molde base.html (debe ser la primera etiqueta) #}
 {% extends 'core/base.html' %}
 
 {# block contenido: lo que va dentro del body de base.html #}
 {% block contenido %}
   {# h1: título de la página #}
   <h1 class="text-2xl font-bold mb-6">Servicios</h1>
-  {# enlace a la ruta con name="crear_servicio" (la registras en el paso 05) #}
+  {# enlace a la ruta con name="crear_servicio" #}
   <a href="{% url 'crear_servicio' %}" class="inline-block mb-4 bg-blue-600 text-white px-4 py-2 rounded-lg">+ Nuevo servicio</a>
-  {# table w-full: la tabla ocupa todo el ancho; border dibuja el contorno gris #}
-  <table class="w-full border border-slate-200 rounded-lg overflow-hidden">
-    {# thead: la fila de encabezados, con fondo gris claro #}
-    <thead class="bg-slate-100">
-      {# tr: la única fila del encabezado #}
-      <tr>
-        {# th: encabezado de la columna del nombre #}
-        <th class="text-left px-4 py-2">Servicio</th>
-        {# th: encabezado de la columna del precio #}
-        <th class="text-left px-4 py-2">Precio</th>
-        {# th: NUEVO, encabezado de la columna con los enlaces Editar / Eliminar #}
-        <th class="text-left px-4 py-2">Acciones</th>
-      {# cierra la fila del encabezado #}
-      </tr>
-    {# cierra el encabezado de la tabla #}
-    </thead>
-    {# tbody: el cuerpo de la tabla, donde van las filas de datos #}
-    <tbody>
-      {# for: repite la fila una vez por cada servicio de la lista #}
-      {% for servicio in servicios %}
-      {# tr: una fila por servicio; border-t dibuja la línea gris de arriba #}
-      <tr class="border-t border-slate-200">
-        {# td: celda con el título del servicio #}
-        <td class="px-4 py-2">{{ servicio.titulo }}</td>
-        {# td: celda con el precio; el $ es texto fijo antes del número #}
-        <td class="px-4 py-2">${{ servicio.precio }}</td>
-        {# td: celda de las acciones #}
-        <td class="px-4 py-2">
-          {# url 'editar_servicio' servicio.pk: arma la dirección /servicios/<id>/editar/ #}
-          <a href="{% url 'editar_servicio' servicio.pk %}" class="text-blue-600 underline">Editar</a>
-          {# url 'eliminar_servicio' servicio.pk: arma la dirección /servicios/<id>/eliminar/ #}
-          <a href="{% url 'eliminar_servicio' servicio.pk %}" class="text-red-600 underline ml-3">Eliminar</a>
-        {# cierra la celda de las acciones #}
-        </td>
-      {# cierra la fila de este servicio #}
-      </tr>
-      {# empty: lo que se muestra si la lista no tiene ningún servicio #}
-      {% empty %}
-      {# fila única con el aviso; colspan="3" la estira a lo ancho de las 3 columnas #}
-      <tr><td colspan="3" class="px-4 py-6 text-center text-slate-500">Todavía no hay servicios.</td></tr>
-      {# endfor: fin de la repetición #}
-      {% endfor %}
-    {# cierra el cuerpo de la tabla #}
-    </tbody>
-  {# cierra la tabla #}
-  </table>
+
+  {# method="GET": la búsqueda queda en la URL (?q=...) y se puede compartir o recargar #}
+  <form method="GET" class="mb-4 flex flex-wrap gap-2 items-center">
+    {# name="q": debe coincidir con request.GET.get('q') de la vista · value: conserva lo que se buscó · aria-label: nombre para lectores de pantalla #}
+    <input type="text" name="q" value="{{ query }}" placeholder="Buscar por título..." aria-label="Buscar servicios por título" class="max-w-xs">
+    {# botón que envía la búsqueda #}
+    <button type="submit" class="bg-slate-700 text-white px-3 py-2 rounded-lg">Buscar</button>
+    {# if query: el enlace "Quitar búsqueda" solo aparece si hay algo buscado #}
+    {% if query %}
+      {# enlace a /servicios/ sin ?q=, para volver a ver todo #}
+      <a href="{% url 'servicios' %}" class="text-slate-600 underline">Quitar búsqueda</a>
+    {# endif: fin del bloque condicional #}
+    {% endif %}
+  {# cierra el formulario de búsqueda #}
+  </form>
+
+  {# overflow-x-auto: en celulares (~375px) la tabla se desplaza de lado en vez de romper la página #}
+  <div class="overflow-x-auto">
+    {# table w-full: la tabla ocupa todo el ancho; border dibuja el contorno gris #}
+    <table class="w-full border border-slate-200 rounded-lg overflow-hidden">
+      {# thead: la fila de encabezados, con fondo gris claro #}
+      <thead class="bg-slate-100">
+        {# tr: la única fila del encabezado #}
+        <tr>
+          {# th: encabezado de la columna del nombre #}
+          <th class="text-left px-4 py-2">Servicio</th>
+          {# th: encabezado de la columna del precio #}
+          <th class="text-left px-4 py-2">Precio</th>
+          {# th: encabezado de la columna con los enlaces Editar / Eliminar #}
+          <th class="text-left px-4 py-2">Acciones</th>
+        {# cierra la fila del encabezado #}
+        </tr>
+      {# cierra el encabezado de la tabla #}
+      </thead>
+      {# tbody: el cuerpo de la tabla, donde van las filas de datos #}
+      <tbody>
+        {# for: repite la fila una vez por cada servicio de la página actual #}
+        {% for servicio in servicios %}
+        {# tr: una fila por servicio; border-t dibuja la línea gris de arriba #}
+        <tr class="border-t border-slate-200">
+          {# td: celda con el título del servicio #}
+          <td class="px-4 py-2">{{ servicio.titulo }}</td>
+          {# td: celda con el precio; el $ es texto fijo antes del número #}
+          <td class="px-4 py-2">${{ servicio.precio }}</td>
+          {# td: celda de las acciones; whitespace-nowrap evita que los 2 enlaces se partan en 2 renglones #}
+          <td class="px-4 py-2 whitespace-nowrap">
+            {# url 'editar_servicio' servicio.pk: arma la dirección /servicios/<id>/editar/ #}
+            <a href="{% url 'editar_servicio' servicio.pk %}" class="text-blue-600 underline">Editar</a>
+            {# url 'eliminar_servicio' servicio.pk: arma la dirección /servicios/<id>/eliminar/ #}
+            <a href="{% url 'eliminar_servicio' servicio.pk %}" class="text-red-600 underline ml-3">Eliminar</a>
+          {# cierra la celda de las acciones #}
+          </td>
+        {# cierra la fila de este servicio #}
+        </tr>
+        {# empty: se dibuja SOLO si no hay ningún servicio que mostrar #}
+        {% empty %}
+        {# fila única con el aviso; colspan="3" la estira a lo ancho de las 3 columnas #}
+        <tr>
+          {# if query: el mensaje cambia si la lista está vacía por una búsqueda o porque no hay registros #}
+          <td colspan="3" class="text-center text-slate-500 py-6">{% if query %}No hay servicios que coincidan con "{{ query }}".{% else %}Aún no tienes servicios. ¡Crea el primero!{% endif %}</td>
+        {# cierra la fila del aviso #}
+        </tr>
+        {# endfor: fin de la repetición #}
+        {% endfor %}
+      {# cierra el cuerpo de la tabla #}
+      </tbody>
+    {# cierra la tabla #}
+    </table>
+  {# cierra el contenedor con desplazamiento lateral #}
+  </div>
+
+  {# if num_pages > 1: los controles de página solo aparecen si hay más de una página #}
+  {% if servicios.paginator.num_pages > 1 %}
+  {# nav: barra de paginación; aria-label la nombra para lectores de pantalla #}
+  <nav class="mt-4 flex items-center gap-2" aria-label="Paginación">
+    {# has_previous: True si no estamos en la primera página #}
+    {% if servicios.has_previous %}
+      {# previous_page_number: la página anterior · q=…: conserva la búsqueda al cambiar de página #}
+      <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}page={{ servicios.previous_page_number }}" class="text-blue-600 underline px-2 py-2">← Anterior</a>
+    {# endif: fin del bloque "Anterior" #}
+    {% endif %}
+    {# number y paginator.num_pages: página actual sobre el total de páginas #}
+    <span class="text-slate-500">Página {{ servicios.number }} de {{ servicios.paginator.num_pages }}</span>
+    {# has_next: True si existe una página después de la actual #}
+    {% if servicios.has_next %}
+      {# next_page_number: la página siguiente · q=…: conserva la búsqueda al cambiar de página #}
+      <a href="?{% if query %}q={{ query|urlencode }}&{% endif %}page={{ servicios.next_page_number }}" class="text-blue-600 underline px-2 py-2">Siguiente →</a>
+    {# endif: fin del bloque "Siguiente" #}
+    {% endif %}
+  {# cierra la barra de paginación #}
+  </nav>
+  {# endif: fin del bloque de paginación #}
+  {% endif %}
 {# endblock: fin del bloque contenido #}
 {% endblock %}
